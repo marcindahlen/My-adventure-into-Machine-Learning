@@ -5,8 +5,8 @@ Machine Learning Algorithms.
 
 ## Markov Chain Monte Carlo with Bayesian Inference
 
-Attached python file is my notebook with heavily commented code 
-on how to use Markov Chain Monte Carlo to update one's belief after seeing particular evidence.
+Attached python file "notes_on_inference.py" is my notebook on how to use Markov Chain Monte Carlo 
+to update one's belief after seeing particular evidence.
 
  
 ![Sample output](https://github.com/marcindahlen/My-adventure-into-Bayesian-Inference/blob/master/wykres.jpg)
