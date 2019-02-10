@@ -9,4 +9,4 @@ Attached python file "notes_on_inference.py" is my notebook on how to use Markov
 to update one's belief after seeing particular evidence.
 
  
-![Sample output](https://github.com/marcindahlen/My-adventure-into-Bayesian-Inference/blob/master/charts/wykres.jpg)
+![Sample output](https://github.com/marcindahlen/My-adventure-into-Bayesian-Inference/blob/master/charts/MCMC_with_Bayes.jpg)
