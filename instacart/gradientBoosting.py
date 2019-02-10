@@ -78,4 +78,47 @@ user_product.head()
 
 del order_products__prior_pd
 
+""""""
+test_orders = orders_pd[orders_pd.eval_set == 'test']
+train_orders = orders_pd[orders_pd.eval_set == 'train']
 
+train_orders.set_index(['order_id', 'product_id'], inplace=True, drop=False)
+
+
+def features(selected_orders, labels_given=False):
+    """"""
+    print('build candidate list')
+    order_list = []
+    product_list = []
+    labels = []
+    i = 0
+    for row in selected_orders.itertuples():
+        i += 1
+        if i % 10000 == 0: print('order row', i)
+        order_id = row.order_id
+        user_id = row.user_id
+        user_products = users_pd.all_products[user_id]
+        product_list += user_products
+        order_list += [order_id] * len(user_products)
+        if labels_given:
+            labels += [(order_id, product) in train_orders.index for product in user_products]
+
+    dataFrame = pandas.DataFrame({'order_id': order_list, 'product_id': product_list}, dtype=numpy.int32)
+    labels = numpy.array(labels, dtype=numpy.int8)
+    del order_list
+    del product_list
+
+#@TODO dataFrame to be processed
+""""""
+
+#@TODO features to be used
+""""""
+
+#@TODO set up h2o
+""""""
+
+#@TODO train the gbm model
+""""""
+
+#@TODO test predictions
+""""""
