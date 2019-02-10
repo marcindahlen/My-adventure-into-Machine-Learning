@@ -31,3 +31,25 @@ plot_data = [trace]
 figure = plotly.graph_objs.Figure(data = plot_data)
 plotly.plotly.offline.plot(figure, filename = graph_out + "0" + '.html', auto_open = False)
 
+"""How many customers are there?"""
+number = lambda x : len(numpy.unique(x))
+customer_no = orders_pd.groupby("eval_set")["user_id"].aggregate(number)
+print(customer_no)
+
+"""What is the distribution of orders by customer?"""
+
+
+"""What is the frequency of orders by the day of week?"""
+
+
+"""What is the distribution of orders by the day's hour?"""
+
+
+"""How would two of above look on a heatmap?"""
+
+
+"""What is the frequency distribution by days from prior order?
+How many days are passing in a row between two orders?"""
+
+
+"""How many products are bought in an order?"""
