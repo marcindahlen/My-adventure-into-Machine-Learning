@@ -1,0 +1,7 @@
+instacart/data/aisles.csv
+instacart/data/departments.csv
+instacart/data/order_products__prior.csv
+instacart/data/order_products__train.csv
+instacart/data/orders.csv
+instacart/data/products.csv
+instacart/data/sample_submission.csv
