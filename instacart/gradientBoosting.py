@@ -3,7 +3,7 @@ Work in progress
 """
 
 import plotly.plotly
-import plotly.graph_objs
+import plotly.graph_objs    #plotly saves charts as interactive html pages
 import h2o                  #https://www.h2o.ai
 import pandas
 import numpy
@@ -30,16 +30,16 @@ print("orders loaded")
 products_pd = pandas.read_csv("data/products.csv")                              #1.5MB
 print("products loaded")
 
-#@TODO DataFrame methods' parameters need to be commented
 """
 I need to build up the data frame which will be passed 
 to H2O machine learning model.
 I will start with adding two new columns to products' data frame.
 Orders column will contain group size by product type occurrence,
-while reorders will contain cumulative sums of reorders by given product."""
+while reorders will contain cumulative sums of reorders by given product.
+"""
 building_products = pandas.DataFrame()
-building_products['orders'] = order_products__prior_pd.groupby(order_products__prior_pd.product_id).size()
-building_products['reorders'] = order_products__prior_pd['reordered'].groupby(order_products__prior_pd.product_id).sum()
+building_products['orders'] = order_products__prior_pd.groupby(order_products__prior_pd.product_id).size() #Compute group sizes
+building_products['reorders'] = order_products__prior_pd['reordered'].groupby(order_products__prior_pd.product_id).sum() #consider only reordered column
 products_pd = products_pd.join(building_products, on = 'product_id')
 products_pd.set_index('product_id', drop = False, inplace = True)
 
@@ -48,17 +48,26 @@ products_pd.info()
 print(products_pd.head())
 print()
 
-""""""
-orders_pd.set_index('order_id', drop = False, inplace = True)
-order_products__prior_pd = order_products__prior_pd.join(orders_pd, on = 'order_id', rsuffix='_')  #@TODO exactly why suffix?
+"""
+Now, I will combine two data frames
+by adding prepared orders_pd to order_products__prior_pd.
+Updated data frame will have columns as following:
+order_id; product_id; add_to_cart_order; reordered; user_id; eval_set; order_number; order_dow; order_hour_of_day; days_since_prior_order;
+"""
+orders_pd.set_index('order_id', drop = False, inplace = True) #from now, order_id is the new index
+order_products__prior_pd = order_products__prior_pd.join(orders_pd, on = 'order_id', rsuffix='_')  #suffix added to not overwrite the new indexing
 order_products__prior_pd.drop('order_id_', inplace = True, axis = 1)
 order_products__prior_pd.info()
 print(order_products__prior_pd.head())
 print()
 
-""""""
+"""
+I will create a new data frame with following colums:
+total_items; all_products; total_distinct_items; avg_order_delay; orders_no; avg_basket;
+
+"""
 building_users = pandas.DataFrame()
-building_users['avg_order_delay'] = orders_pd.groupby('user_id')['days_since_prior_order'].mean()
+building_users['avg_order_delay'] = orders_pd.groupby('user_id')['days_since_prior_order'].mean() #Compute mean of groups, excluding missing values
 building_users['orders_no'] = orders_pd.groupby('user_id').size()
 users_pd = pandas.DataFrame()
 users_pd['total_items'] = order_products__prior_pd.groupby('user_id').size()
@@ -66,13 +75,13 @@ users_pd['all_products'] = order_products__prior_pd.groupby('user_id')['product_
 users_pd['total_distinct_items'] = (users_pd.all_products.map(len))
 
 users_pd = users_pd.join(building_users)
-users_pd['avg_basket'] = (users_pd.total_items / users_pd.orders_no)
+users_pd['avg_basket'] = (users_pd.total_items / users_pd.orders_no) #Mean number of products in a basket by user.
 del building_users
 users_pd.info()
 print(users_pd.head())
 print()
 
-#@TODO exactly why should i harcode any number here?
+#@TODO exactly why should i hardcode any number here?
 """"""
 order_products__prior_pd['user_product'] = order_products__prior_pd.product_id + order_products__prior_pd.user_id * 100000
 order_products__prior_pd.info()
