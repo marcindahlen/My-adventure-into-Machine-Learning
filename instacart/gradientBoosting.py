@@ -64,14 +64,16 @@ print()
 """
 I will create a new data frame with following colums:
 total_items; all_products; total_distinct_items; avg_order_delay; orders_no; avg_basket;
-
+It will be indexed by user_id (additional column).
+These new frame will be part of the final data frame prepared for h2o.
+This data frame tells basic statistics about each user's ordering habits.
 """
 building_users = pandas.DataFrame()
 building_users['avg_order_delay'] = orders_pd.groupby('user_id')['days_since_prior_order'].mean() #Compute mean of groups, excluding missing values
 building_users['orders_no'] = orders_pd.groupby('user_id').size()
 users_pd = pandas.DataFrame()
 users_pd['total_items'] = order_products__prior_pd.groupby('user_id').size()
-users_pd['all_products'] = order_products__prior_pd.groupby('user_id')['product_id'].apply(set)
+users_pd['all_products'] = order_products__prior_pd.groupby('user_id')['product_id'].apply(set) #Apply set function group-wise and combine the results together.
 users_pd['total_distinct_items'] = (users_pd.all_products.map(len))
 
 users_pd = users_pd.join(building_users)
@@ -81,17 +83,25 @@ users_pd.info()
 print(users_pd.head())
 print()
 
-#@TODO exactly why should i hardcode any number here?
-""""""
+"""
+Here I'm adding new column to prior products' data frame,
+which stores in each row user id "combined" with product id.
+"Combined" means following operation:
+i.e. 202279 + 33120 = 20227933120
+"""
 order_products__prior_pd['user_product'] = order_products__prior_pd.product_id + order_products__prior_pd.user_id * 100000
 order_products__prior_pd.info()
 print(order_products__prior_pd.head())
 print()
 
-""""""
+"""
+Following loop's product is a dictionary,
+where keys are user ids "combined" with product ids and values are tuples.
+Those tuples contains: number of orders; the id of last order; cumulative sum of past addings to basket;
+"""
 d = dict()
-for row in order_products__prior_pd.itertuples():
-    z = row.user_product
+for row in order_products__prior_pd.itertuples():   #Yields a namedtuple for each row in the DataFrame with the first field possibly being the index and following fields being the column values.
+    z = row.user_product                            #Column added in previous step, consist of user id "combined" with product id
     if z not in d:
         d[z] = (1,
                 (row.order_number, row.order_id),
@@ -101,26 +111,24 @@ for row in order_products__prior_pd.itertuples():
                 max(d[z][1], (row.order_number, row.order_id)),
                 d[z][2] + row.add_to_cart_order)
 
-user_product = pandas.DataFrame.from_dict(d, orient = 'index')
+user_vs_product = pandas.DataFrame.from_dict(d, orient = 'index')  #orient → if the keys should be rows, pass ‘index’
 del d
-
-""""""
-user_product.columns = ['orders_no', 'last_order_id', 'sum_pos_in_cart']
-user_product.last_order_id = user_product.last_order_id.map(lambda x: x[1])
-user_product.info()
-print(user_product.head())
+user_vs_product.columns = ['orders_no', 'last_order_id', 'sum_pos_in_cart']
+user_vs_product.last_order_id = user_vs_product.last_order_id.map(lambda x: x[1])
+user_vs_product.info()
+print(user_vs_product.head())
 print()
 
-del order_products__prior_pd
+del order_products__prior_pd #"missing" columns are present in orders_pd
 
 """"""
-test_orders = orders_pd[orders_pd.eval_set == 'test']
-train_orders = orders_pd[orders_pd.eval_set == 'train']
+test_orders = orders_pd[orders_pd.eval_set == 'test']       #bool value is taken from the orders.csv
+train_orders = orders_pd[orders_pd.eval_set == 'train']     #bool value is taken from the orders.csv
 
-train_orders.set_index(['order_id', 'product_id'], inplace=True, drop=False) #@TODO KeyError: 'product_id'
+order_products__train_pd.set_index(['order_id', 'product_id'], inplace=True, drop=False)
 
 
-def features(selected_orders, labels_given=False):
+def createTheDataFrame(selected_orders, labels_given=False):
     #@TODO explanations to be added
     """"""
     print('build candidate list')
@@ -165,10 +173,10 @@ def features(selected_orders, labels_given=False):
 
     dataFrame['z'] = dataFrame.user_id * 100000 + dataFrame.product_id
     dataFrame.drop(['user_id'], axis=1, inplace=True)
-    dataFrame['UP_orders'] = dataFrame.z.map(user_product.orders_no)
-    dataFrame['UP_orders_ratio'] = (dataFrame.UP_orders / dataFrame.user_total_orders).astype(np.float32)
-    dataFrame['UP_last_order_id'] = dataFrame.z.map(user_product.last_order_id)
-    dataFrame['UP_average_pos_in_cart'] = (dataFrame.z.map(user_product.sum_pos_in_cart) / dataFrame.UP_orders)
+    dataFrame['UP_orders'] = dataFrame.z.map(user_vs_product.orders_no)
+    dataFrame['UP_orders_ratio'] = (dataFrame.UP_orders / dataFrame.user_total_orders)
+    dataFrame['UP_last_order_id'] = dataFrame.z.map(user_vs_product.last_order_id)
+    dataFrame['UP_average_pos_in_cart'] = (dataFrame.z.map(user_vs_product.sum_pos_in_cart) / dataFrame.UP_orders)
     dataFrame['UP_reorder_rate'] = (dataFrame.UP_orders / dataFrame.user_total_orders)
     dataFrame['UP_orders_since_last'] = dataFrame.user_total_orders - dataFrame.UP_last_order_id.map(orders_pd.order_number)
     dataFrame['UP_delta_hour_vs_last'] = abs(dataFrame.order_hour_of_day - dataFrame.UP_last_order_id.map(orders_pd.order_hour_of_day)).map(lambda x: min(x, 24 - x))
@@ -179,7 +187,7 @@ def features(selected_orders, labels_given=False):
 
 #@TODO features to be used
 """"""
-dataFrame_training, labels = features(train_orders, labels_given = True)
+dataFrame_training, labels = createTheDataFrame(train_orders, labels_given = True)
 dataFrame_training.head()
 
 features_to_use = ['user_total_orders', 'user_total_items', 'total_distinct_items',
