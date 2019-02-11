@@ -109,8 +109,36 @@ def features(selected_orders, labels_given=False):
     del order_list
     del product_list
 
-#@TODO dataFrame to be processed
-""""""
+    #@TODO dataFrame to be processed
+    """"""
+    dataFrame['user_id'] = dataFrame.order_id.map(orders_pd.user_id)
+    dataFrame['user_total_orders'] = dataFrame.user_id.map(users_pd.orders_no)
+    dataFrame['user_total_items'] = dataFrame.user_id.map(users_pd.total_items)
+    dataFrame['total_distinct_items'] = dataFrame.user_id.map(users_pd.total_distinct_items)
+    dataFrame['user_average_days_between_orders'] = dataFrame.user_id.map(users_pd.avg_order_delay)
+    dataFrame['user_average_basket'] =  dataFrame.user_id.map(users_pd.avg_basket)
+
+    dataFrame['order_hour_of_day'] = dataFrame.order_id.map(orders_pd.order_hour_of_day)
+    dataFrame['days_since_prior_order'] = dataFrame.order_id.map(orders_pd.days_since_prior_order)
+    dataFrame['days_since_ratio'] = dataFrame.days_since_prior_order / dataFrame.user_average_days_between_orders
+
+    dataFrame['aisle_id'] = dataFrame.product_id.map(products_pd.aisle_id)
+    dataFrame['department_id'] = dataFrame.product_id.map(products_pd.department_id)
+    dataFrame['product_orders'] = dataFrame.product_id.map(products_pd.orders)
+    dataFrame['product_reorders'] = dataFrame.product_id.map(products_pd.reorders)
+    dataFrame['product_reorder_rate'] = dataFrame.product_id.map(products_pd.reorder_rate)
+
+    dataFrame['z'] = dataFrame.user_id * 100000 + dataFrame.product_id
+    dataFrame.drop(['user_id'], axis=1, inplace=True)
+    dataFrame['UP_orders'] = dataFrame.z.map(user_product.orders_no)
+    dataFrame['UP_orders_ratio'] = (dataFrame.UP_orders / dataFrame.user_total_orders).astype(np.float32)
+    dataFrame['UP_last_order_id'] = dataFrame.z.map(user_product.last_order_id)
+    dataFrame['UP_average_pos_in_cart'] = (dataFrame.z.map(user_product.sum_pos_in_cart) / dataFrame.UP_orders)
+    dataFrame['UP_reorder_rate'] = (dataFrame.UP_orders / dataFrame.user_total_orders)
+    dataFrame['UP_orders_since_last'] = dataFrame.user_total_orders - dataFrame.UP_last_order_id.map(orders_pd.order_number)
+    dataFrame['UP_delta_hour_vs_last'] = abs(dataFrame.order_hour_of_day - dataFrame.UP_last_order_id.map(orders_pd.order_hour_of_day)).map(lambda x: min(x, 24 - x))
+
+    dataFrame.drop(['UP_last_order_id', 'z'], axis=1, inplace=True)
 
 #@TODO features to be used
 """"""

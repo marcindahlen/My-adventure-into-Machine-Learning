@@ -29,7 +29,7 @@ rows_count = orders_pd.eval_set.value_counts()
 trace = plotly.graph_objs.Scatter(x = rows_count.index, y = rows_count.values)
 plot_data = [trace]
 figure = plotly.graph_objs.Figure(data = plot_data)
-plotly.plotly.offline.plot(figure, filename = graph_out + "0" + '.html', auto_open = False)
+plotly.offline.plot(figure, filename = graph_out + "0" + '.html', auto_open = False)
 
 """How many customers are there?"""
 number = lambda x : len(numpy.unique(x))
