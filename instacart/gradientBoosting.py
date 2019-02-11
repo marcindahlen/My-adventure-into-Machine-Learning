@@ -156,7 +156,6 @@ def createTheDataFrame(selected_orders, labels_given = False):
     del order_list
     del product_list
 
-    #@TODO dataFrame to be processed
     """"""
     dataFrame['user_id'] = dataFrame.order_id.map(orders_pd.user_id)
     dataFrame['user_total_orders'] = dataFrame.user_id.map(users_pd.orders_no)
