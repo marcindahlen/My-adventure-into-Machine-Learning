@@ -1,5 +1,5 @@
 """
-Work in progress
+I relied HEAVILY on https://www.kaggle.com/paulantoine/light-gbm-benchmark-0-3692
 """
 
 import plotly.plotly
@@ -121,20 +121,24 @@ print()
 
 del order_products__prior_pd #"missing" columns are present in orders_pd
 
-""""""
+"""
+Following lines creates two data frames from preset orders,
+one is for training,
+one is for testing.
+Proper labeling is provided by Instacart.
+"""
 test_orders = orders_pd[orders_pd.eval_set == 'test']       #bool value is taken from the orders.csv
 train_orders = orders_pd[orders_pd.eval_set == 'train']     #bool value is taken from the orders.csv
 
-order_products__train_pd.set_index(['order_id', 'product_id'], inplace=True, drop=False)
+order_products__train_pd.set_index(['order_id', 'product_id'], inplace = True, drop = False)
 
 
-def createTheDataFrame(selected_orders, labels_given=False):
-    #@TODO explanations to be added
+def createTheDataFrame(selected_orders, labels_given = False):
     """"""
-    print('build candidate list')
     order_list = []
     product_list = []
     labels = []
+
     i = 0
     for row in selected_orders.itertuples():
         i += 1
@@ -208,3 +212,58 @@ h2o_frame = h2o.H2OFrame(dataFrame_training)
 
 #@TODO test predictions
 """"""
+
+
+df_train, labels = features(train_orders, labels_given=True)
+print('formating for lgb')
+d_train = lgb.Dataset(df_train[f_to_use],
+                      label=labels,
+                      categorical_feature=['aisle_id', 'department_id'])  # , 'order_hour_of_day', 'dow'
+del df_train
+
+params = {
+    'task': 'train',
+    'boosting_type': 'gbdt',
+    'objective': 'binary',
+    'metric': {'binary_logloss'},
+    'num_leaves': 96,
+    'max_depth': 10,
+    'feature_fraction': 0.9,
+    'bagging_fraction': 0.95,
+    'bagging_freq': 5
+}
+ROUNDS = 100
+
+print('light GBM train :-)')
+bst = lgb.train(params, d_train, ROUNDS)
+# lgb.plot_importance(bst, figsize=(9,20))
+del d_train
+
+### build candidates list for test ###
+
+df_test, _ = features(test_orders)
+
+print('light GBM predict')
+preds = bst.predict(df_test[f_to_use])
+
+df_test['pred'] = preds
+
+TRESHOLD = 0.22  # guess, should be tuned with crossval on a subset of train data
+
+d = dict()
+for row in df_test.itertuples():
+    if row.pred > TRESHOLD:
+        try:
+            d[row.order_id] += ' ' + str(row.product_id)
+        except:
+            d[row.order_id] = str(row.product_id)
+
+for order in test_orders.order_id:
+    if order not in d:
+        d[order] = 'None'
+
+sub = pd.DataFrame.from_dict(d, orient='index')
+
+sub.reset_index(inplace=True)
+sub.columns = ['order_id', 'products']
+sub.to_csv('sub.csv', index=False)
