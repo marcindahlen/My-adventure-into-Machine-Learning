@@ -10,20 +10,40 @@ import numpy
 graph_out = "../charts/"
 
 aisles_pd = pandas.read_csv("data/aisles.csv")
+print("aisles loaded")
 departments_pd = pandas.read_csv("data/departments.csv")
+print("departments loaded")
 order_products__prior_pd = pandas.read_csv("data/order_products__prior.csv")
+print("products__prior loaded")
 order_products__train_pd = pandas.read_csv("data/order_products__train.csv")
+print("products__train loaded")
 orders_pd = pandas.read_csv("data/orders.csv")
+print("orders loaded")
 products_pd = pandas.read_csv("data/products.csv")
+print("products loaded")
 
 """
 orders_pd → order_hour_of_day
 order_products__prior_pd → add_to_cart_order | reordered
 """
-orders_pd.info()
-orders_pd.head()
+print("AISLES:")
+aisles_pd.info()
+print(aisles_pd.head())
+print("DEPARTMENTS")
+departments_pd.info()
+print(departments_pd.head())
+print("PRIOR PRODUCTS")
 order_products__prior_pd.info()
-order_products__prior_pd.head()
+print(order_products__prior_pd.head())
+print("TRAINING PRODUCTS")
+order_products__train_pd.info()
+print(order_products__train_pd.head())
+print("ORDERS")
+orders_pd.info()
+print(orders_pd.head())
+print("PRODUCTS")
+products_pd.info()
+print(products_pd.head())
 
 rows_count = orders_pd.eval_set.value_counts()
 trace = plotly.graph_objs.Scatter(x = rows_count.index, y = rows_count.values)

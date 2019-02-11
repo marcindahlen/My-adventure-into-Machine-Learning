@@ -11,16 +11,32 @@ import numpy
 graph_out = "../charts/"
 
 #@TODO Check using numpy types
-""""""
-aisles_pd = pandas.read_csv("data/aisles.csv")
-departments_pd = pandas.read_csv("data/departments.csv")
-order_products__prior_pd = pandas.read_csv("data/order_products__prior.csv")
-order_products__train_pd = pandas.read_csv("data/order_products__train.csv")
-orders_pd = pandas.read_csv("data/orders.csv")
-products_pd = pandas.read_csv("data/products.csv")
+"""
+Since the data is already cleaned up and prepared for calculations
+I simply load the csv files to pandas data frames.
+Cleaned up data means there are no meaningless nulls,
+and no unnecessary columns.
+"""
+aisles_pd = pandas.read_csv("data/aisles.csv")                                  #2.5KB
+print("aisles loaded")
+departments_pd = pandas.read_csv("data/departments.csv")                        #420B
+print("departments loaded")
+order_products__prior_pd = pandas.read_csv("data/order_products__prior.csv")    #1GB
+print("products__prior loaded")
+order_products__train_pd = pandas.read_csv("data/order_products__train.csv")    #42MB
+print("products__train loaded")
+orders_pd = pandas.read_csv("data/orders.csv")                                  #183MB
+print("orders loaded")
+products_pd = pandas.read_csv("data/products.csv")                              #1.5MB
+print("products loaded")
 
 #@TODO DataFrame methods' parameters need to be commented
-""""""
+"""
+I need to build up the data frame which will be passed 
+to H2O machine learning model.
+I will start with adding two new columns to products' data frame.
+Orders column will contain group size by product type occurrence,
+while reorders will contain cumulative sums of reorders by given product."""
 building_products = pandas.DataFrame()
 building_products['orders'] = order_products__prior_pd.groupby(order_products__prior_pd.product_id).size()
 building_products['reorders'] = order_products__prior_pd['reordered'].groupby(order_products__prior_pd.product_id).sum()
@@ -28,13 +44,17 @@ products_pd = products_pd.join(building_products, on = 'product_id')
 products_pd.set_index('product_id', drop = False, inplace = True)
 
 del building_products
-products_pd.head()
+products_pd.info()
+print(products_pd.head())
+print()
 
 """"""
 orders_pd.set_index('order_id', drop = False, inplace = True)
 order_products__prior_pd = order_products__prior_pd.join(orders_pd, on = 'order_id', rsuffix='_')  #@TODO exactly why suffix?
 order_products__prior_pd.drop('order_id_', inplace = True, axis = 1)
-order_products__prior_pd.head()
+order_products__prior_pd.info()
+print(order_products__prior_pd.head())
+print()
 
 """"""
 building_users = pandas.DataFrame()
@@ -48,12 +68,16 @@ users_pd['total_distinct_items'] = (users_pd.all_products.map(len))
 users_pd = users_pd.join(building_users)
 users_pd['avg_basket'] = (users_pd.total_items / users_pd.orders_no)
 del building_users
-users_pd.head()
+users_pd.info()
+print(users_pd.head())
+print()
 
 #@TODO exactly why should i harcode any number here?
 """"""
 order_products__prior_pd['user_product'] = order_products__prior_pd.product_id + order_products__prior_pd.user_id * 100000
-order_products__prior_pd.head()
+order_products__prior_pd.info()
+print(order_products__prior_pd.head())
+print()
 
 """"""
 d = dict()
@@ -74,7 +98,9 @@ del d
 """"""
 user_product.columns = ['orders_no', 'last_order_id', 'sum_pos_in_cart']
 user_product.last_order_id = user_product.last_order_id.map(lambda x: x[1])
-user_product.head()
+user_product.info()
+print(user_product.head())
+print()
 
 del order_products__prior_pd
 
@@ -82,7 +108,7 @@ del order_products__prior_pd
 test_orders = orders_pd[orders_pd.eval_set == 'test']
 train_orders = orders_pd[orders_pd.eval_set == 'train']
 
-train_orders.set_index(['order_id', 'product_id'], inplace=True, drop=False)
+train_orders.set_index(['order_id', 'product_id'], inplace=True, drop=False) #@TODO KeyError: 'product_id'
 
 
 def features(selected_orders, labels_given=False):
@@ -140,11 +166,25 @@ def features(selected_orders, labels_given=False):
 
     dataFrame.drop(['UP_last_order_id', 'z'], axis=1, inplace=True)
 
+    return (dataFrame, labels)
+
 #@TODO features to be used
 """"""
+dataFrame_training, labels = features(train_orders, labels_given = True)
+dataFrame_training.head()
+
+features_to_use = ['user_total_orders', 'user_total_items', 'total_distinct_items',
+       'user_average_days_between_orders', 'user_average_basket',
+       'order_hour_of_day', 'days_since_prior_order', 'days_since_ratio',
+       'aisle_id', 'department_id', 'product_orders', 'product_reorders',
+       'product_reorder_rate', 'UP_orders', 'UP_orders_ratio',
+       'UP_average_pos_in_cart', 'UP_reorder_rate', 'UP_orders_since_last',
+       'UP_delta_hour_vs_last']
 
 #@TODO set up h2o
 """"""
+h2o.init()
+h2o_frame = h2o.H2OFrame(dataFrame_training)
 
 #@TODO train the gbm model
 """"""
