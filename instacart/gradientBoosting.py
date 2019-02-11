@@ -86,6 +86,7 @@ train_orders.set_index(['order_id', 'product_id'], inplace=True, drop=False)
 
 
 def features(selected_orders, labels_given=False):
+    #@TODO explanations to be added
     """"""
     print('build candidate list')
     order_list = []
