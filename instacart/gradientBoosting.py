@@ -5,6 +5,7 @@ I relied HEAVILY on https://www.kaggle.com/paulantoine/light-gbm-benchmark-0-369
 import plotly.plotly
 import plotly.graph_objs    #plotly saves charts as interactive html pages
 import h2o                  #https://www.h2o.ai
+import h2o.estimators.gbm
 import pandas
 import numpy
 
@@ -160,7 +161,7 @@ def createTheDataFrame(selected_orders, labels_given = False):
     del order_list
     del product_list
 
-    dataFrame['user_id'] = dataFrame.order_id.map(orders_pd.user_id)
+    dataFrame['user_id'] = dataFrame.order_id.map(orders_pd.user_id)                                                    #
     dataFrame['user_total_orders'] = dataFrame.user_id.map(users_pd.orders_no)
     dataFrame['user_total_items'] = dataFrame.user_id.map(users_pd.total_items)
     dataFrame['total_distinct_items'] = dataFrame.user_id.map(users_pd.total_distinct_items)
@@ -192,8 +193,11 @@ def createTheDataFrame(selected_orders, labels_given = False):
     print(dataFrame.loc[[1]])
     return (dataFrame, labels)
 
-#@TODO features to be used
-""""""
+"""
+H2O needs to be initialized. 
+The command starts a local H2O server.
+Predictor columns are set.
+"""
 h2o.init()
 
 features_to_use = ['user_total_orders', 'user_total_items', 'total_distinct_items',
@@ -204,6 +208,8 @@ features_to_use = ['user_total_orders', 'user_total_items', 'total_distinct_item
        'UP_orders', 'UP_orders_ratio',
        'UP_average_pos_in_cart', 'UP_reorder_rate', 'UP_orders_since_last',
        'UP_delta_hour_vs_last']
+
+GradientBoostingMachine = h2o.estimators.gbm.H2OGradientBoostingEstimator()
 
 #@TODO set up h2o
 """"""
@@ -219,6 +225,8 @@ del dataFrame_testing
 
 #@TODO train the gbm model
 """"""
+GradientBoostingMachine.train(x = features_to_use, y = None, training_frame = h2o_training_frame)
+
 
 #@TODO test predictions
 """"""
