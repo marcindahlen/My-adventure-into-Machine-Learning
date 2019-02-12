@@ -211,7 +211,6 @@ features_to_use = ['user_total_orders', 'user_total_items', 'total_distinct_item
 
 GradientBoostingMachine = h2o.estimators.gbm.H2OGradientBoostingEstimator(ntrees = 144, max_depth = 6, learn_rate = 0.1)
 
-#@TODO set up h2o
 """"""
 dataFrame_training, labels = createTheDataFrame(train_orders, labels_given = True)
 dataFrame_training.info()
@@ -223,37 +222,34 @@ dataFrame_testing.info()
 h2o_testing_frame = h2o.H2OFrame(dataFrame_testing)
 del dataFrame_testing
 
-#@TODO train the gbm model
 """"""
-GradientBoostingMachine.train(x = features_to_use, y = None, training_frame = h2o_training_frame)
+GradientBoostingMachine.train(x = features_to_use, y = 'product_id', training_frame = h2o_training_frame)
 print(GradientBoostingMachine)
 
 
-#@TODO test predictions
 """"""
-treshold = 0.25
+threshold = 0.25
 
 predictions = GradientBoostingMachine.predict(h2o_testing_frame)
 predictions.summary()
 
-h2o_testing_frame['predictions'] = predictions
+dataFrame_testing = h2o_testing_frame.as_data_frame()
+dataFrame_testing['predictions'] = predictions
 
+""""""
 d = dict()
-for row in h2o_testing_frame.itertuples():
-    if row.predictions > treshold:
+for row in dataFrame_testing.itertuples():
+    if row.predictions > threshold:
         try:
             d[row.order_id] += ' ' + str(row.product_id)
         except:
             d[row.order_id] = str(row.product_id)
 
-for order in test_orders.order_id:
+for order in dataFrame_testing.order_id:
     if order not in d:
         d[order] = 'None'
 
-"""
-sub = pd.DataFrame.from_dict(d, orient='index')
-
-sub.reset_index(inplace=True)
-sub.columns = ['order_id', 'products']
-sub.to_csv('sub.csv', index=False)
-"""
+answers = pandas.DataFrame.from_dict(d, orient = 'index')
+answers.reset_index(inplace = True)
+answers.columns = ['order_id', 'products']
+answers.to_csv('data/answers.csv', index = False)
