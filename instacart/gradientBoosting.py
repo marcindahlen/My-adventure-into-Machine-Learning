@@ -142,17 +142,17 @@ def createTheDataFrame(selected_orders, labels_given = False):
     i = 0
     for row in selected_orders.itertuples():
         i += 1
-        if i % 10000 == 0: print('order row', i)
+        if i % 10000 == 0: print('processing order row no. ', i)
         order_id = row.order_id
         user_id = row.user_id
         user_products = users_pd.all_products[user_id]
         product_list += user_products
         order_list += [order_id] * len(user_products)
         if labels_given:
-            labels += [(order_id, product) in train_orders.index for product in user_products]
+            labels += [(order_id, product) in train_orders.index for product in user_products]              #@TODO explain
 
-    dataFrame = pandas.DataFrame({'order_id': order_list, 'product_id': product_list}, dtype=numpy.int32)
-    labels = numpy.array(labels, dtype=numpy.int8)
+    dataFrame = pandas.DataFrame({'order_id': order_list, 'product_id': product_list}, dtype = numpy.int32)
+    labels = numpy.array(labels, dtype = numpy.int8)
     del order_list
     del product_list
 
