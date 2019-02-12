@@ -134,7 +134,11 @@ order_products__train_pd.set_index(['order_id', 'product_id'], inplace = True, d
 
 
 def createTheDataFrame(selected_orders, labels_given = False):
-    """"""
+    """
+    Method produces final data frame to be delivered to train and test model.
+    The for loop within the method procure first columns to be "keys"
+    by which rest of the data will be mapped.
+    """
     order_list = []
     product_list = []
     labels = []
@@ -149,14 +153,13 @@ def createTheDataFrame(selected_orders, labels_given = False):
         product_list += user_products
         order_list += [order_id] * len(user_products)
         if labels_given:
-            labels += [(order_id, product) in train_orders.index for product in user_products]              #@TODO explain
+            labels += [(order_id, product) in train_orders.index for product in user_products]            #@TODO explain
 
     dataFrame = pandas.DataFrame({'order_id': order_list, 'product_id': product_list}, dtype = numpy.int32)
     labels = numpy.array(labels, dtype = numpy.int8)
     del order_list
     del product_list
 
-    """"""
     dataFrame['user_id'] = dataFrame.order_id.map(orders_pd.user_id)
     dataFrame['user_total_orders'] = dataFrame.user_id.map(users_pd.orders_no)
     dataFrame['user_total_items'] = dataFrame.user_id.map(users_pd.total_items)
@@ -172,10 +175,10 @@ def createTheDataFrame(selected_orders, labels_given = False):
     dataFrame['department_id'] = dataFrame.product_id.map(products_pd.department_id)
     dataFrame['product_orders'] = dataFrame.product_id.map(products_pd.orders)
     dataFrame['product_reorders'] = dataFrame.product_id.map(products_pd.reorders)
-    dataFrame['product_reorder_rate'] = dataFrame.product_id.map(products_pd.reorder_rate)
+    #dataFrame['product_reorder_rate'] = dataFrame.product_id.map(products_pd.reorder_rate)
 
     dataFrame['z'] = dataFrame.user_id * 100000 + dataFrame.product_id
-    dataFrame.drop(['user_id'], axis=1, inplace=True)
+    dataFrame.drop(['user_id'], axis = 1, inplace = True)
     dataFrame['UP_orders'] = dataFrame.z.map(user_vs_product.orders_no)
     dataFrame['UP_orders_ratio'] = (dataFrame.UP_orders / dataFrame.user_total_orders)
     dataFrame['UP_last_order_id'] = dataFrame.z.map(user_vs_product.last_order_id)
@@ -184,27 +187,35 @@ def createTheDataFrame(selected_orders, labels_given = False):
     dataFrame['UP_orders_since_last'] = dataFrame.user_total_orders - dataFrame.UP_last_order_id.map(orders_pd.order_number)
     dataFrame['UP_delta_hour_vs_last'] = abs(dataFrame.order_hour_of_day - dataFrame.UP_last_order_id.map(orders_pd.order_hour_of_day)).map(lambda x: min(x, 24 - x))
 
-    dataFrame.drop(['UP_last_order_id', 'z'], axis=1, inplace=True)
+    dataFrame.drop(['UP_last_order_id', 'z'], axis = 1, inplace = True)
 
+    print(dataFrame.loc[[1]])
     return (dataFrame, labels)
 
 #@TODO features to be used
 """"""
-dataFrame_training, labels = createTheDataFrame(train_orders, labels_given = True)
-dataFrame_training.head()
+h2o.init()
 
 features_to_use = ['user_total_orders', 'user_total_items', 'total_distinct_items',
        'user_average_days_between_orders', 'user_average_basket',
        'order_hour_of_day', 'days_since_prior_order', 'days_since_ratio',
        'aisle_id', 'department_id', 'product_orders', 'product_reorders',
-       'product_reorder_rate', 'UP_orders', 'UP_orders_ratio',
+       #'product_reorder_rate',
+       'UP_orders', 'UP_orders_ratio',
        'UP_average_pos_in_cart', 'UP_reorder_rate', 'UP_orders_since_last',
        'UP_delta_hour_vs_last']
 
 #@TODO set up h2o
 """"""
-h2o.init()
-h2o_frame = h2o.H2OFrame(dataFrame_training)
+dataFrame_training, labels = createTheDataFrame(train_orders, labels_given = True)
+dataFrame_training.info()
+h2o_training_frame = h2o.H2OFrame(dataFrame_training)
+del dataFrame_training
+
+dataFrame_testing, _ = createTheDataFrame(test_orders)
+dataFrame_testing.info()
+h2o_test_frame = h2o.H2OFrame(dataFrame_testing)
+del dataFrame_testing
 
 #@TODO train the gbm model
 """"""
@@ -212,7 +223,7 @@ h2o_frame = h2o.H2OFrame(dataFrame_training)
 #@TODO test predictions
 """"""
 
-
+"""
 df_train, labels = features(train_orders, labels_given=True)
 print('formating for lgb')
 d_train = lgb.Dataset(df_train[f_to_use],
@@ -266,3 +277,4 @@ sub = pd.DataFrame.from_dict(d, orient='index')
 sub.reset_index(inplace=True)
 sub.columns = ['order_id', 'products']
 sub.to_csv('sub.csv', index=False)
+"""
