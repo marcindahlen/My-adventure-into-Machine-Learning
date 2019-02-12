@@ -209,7 +209,7 @@ features_to_use = ['user_total_orders', 'user_total_items', 'total_distinct_item
        'UP_average_pos_in_cart', 'UP_reorder_rate', 'UP_orders_since_last',
        'UP_delta_hour_vs_last']
 
-GradientBoostingMachine = h2o.estimators.gbm.H2OGradientBoostingEstimator()
+GradientBoostingMachine = h2o.estimators.gbm.H2OGradientBoostingEstimator(ntrees = 144, max_depth = 6, learn_rate = 0.1)
 
 #@TODO set up h2o
 """"""
@@ -220,57 +220,27 @@ del dataFrame_training
 
 dataFrame_testing, _ = createTheDataFrame(test_orders)
 dataFrame_testing.info()
-h2o_test_frame = h2o.H2OFrame(dataFrame_testing)
+h2o_testing_frame = h2o.H2OFrame(dataFrame_testing)
 del dataFrame_testing
 
 #@TODO train the gbm model
 """"""
 GradientBoostingMachine.train(x = features_to_use, y = None, training_frame = h2o_training_frame)
+print(GradientBoostingMachine)
 
 
 #@TODO test predictions
 """"""
+treshold = 0.25
 
-"""
-df_train, labels = features(train_orders, labels_given=True)
-print('formating for lgb')
-d_train = lgb.Dataset(df_train[f_to_use],
-                      label=labels,
-                      categorical_feature=['aisle_id', 'department_id'])  # , 'order_hour_of_day', 'dow'
-del df_train
+predictions = GradientBoostingMachine.predict(h2o_testing_frame)
+predictions.summary()
 
-params = {
-    'task': 'train',
-    'boosting_type': 'gbdt',
-    'objective': 'binary',
-    'metric': {'binary_logloss'},
-    'num_leaves': 96,
-    'max_depth': 10,
-    'feature_fraction': 0.9,
-    'bagging_fraction': 0.95,
-    'bagging_freq': 5
-}
-ROUNDS = 100
-
-print('light GBM train :-)')
-bst = lgb.train(params, d_train, ROUNDS)
-# lgb.plot_importance(bst, figsize=(9,20))
-del d_train
-
-### build candidates list for test ###
-
-df_test, _ = features(test_orders)
-
-print('light GBM predict')
-preds = bst.predict(df_test[f_to_use])
-
-df_test['pred'] = preds
-
-TRESHOLD = 0.22  # guess, should be tuned with crossval on a subset of train data
+h2o_testing_frame['predictions'] = predictions
 
 d = dict()
-for row in df_test.itertuples():
-    if row.pred > TRESHOLD:
+for row in h2o_testing_frame.itertuples():
+    if row.predictions > treshold:
         try:
             d[row.order_id] += ' ' + str(row.product_id)
         except:
@@ -280,6 +250,7 @@ for order in test_orders.order_id:
     if order not in d:
         d[order] = 'None'
 
+"""
 sub = pd.DataFrame.from_dict(d, orient='index')
 
 sub.reset_index(inplace=True)
