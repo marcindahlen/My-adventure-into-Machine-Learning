@@ -7,3 +7,4 @@ instacart/data/products.csv
 instacart/data/sample_submission.csv
 charts/*
 instacart/venv/*
+data/
