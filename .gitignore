@@ -8,3 +8,4 @@ instacart/data/sample_submission.csv
 charts/*
 instacart/venv/*
 data/
+instacart/.idea/
