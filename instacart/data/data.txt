@@ -1,2 +1,0 @@
-The data, and 2017's competition can be found at:
-https://www.kaggle.com/c/instacart-market-basket-analysis

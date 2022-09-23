@@ -2,7 +2,7 @@
 Work in progress
 """
 
-import plotly.plotly
+import plotly
 import plotly.graph_objs
 import pandas
 import numpy

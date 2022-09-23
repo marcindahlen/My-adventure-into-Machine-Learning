@@ -1,11 +1,5 @@
-instacart/data/aisles.csv
-instacart/data/departments.csv
-instacart/data/order_products__prior.csv
-instacart/data/order_products__train.csv
-instacart/data/orders.csv
-instacart/data/products.csv
-instacart/data/sample_submission.csv
+kaggle_instacart_with_H2Oai/data/*
+kaggle_instacart_with_H2Oai/venv/*
+kaggle_instacart_with_H2Oai/.idea/
 charts/*
-instacart/venv/*
 data/
-instacart/.idea/

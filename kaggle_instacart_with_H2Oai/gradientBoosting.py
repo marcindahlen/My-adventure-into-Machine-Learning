@@ -1,9 +1,12 @@
 """
 I relied HEAVILY on https://www.kaggle.com/paulantoine/light-gbm-benchmark-0-3692
+
+The data, and 2017's competition can be found at:
+https://www.kaggle.com/c/instacart-market-basket-analysis
+
+The data is to be placed in data/ folder
 """
 
-import plotly.plotly
-import plotly.graph_objs    #plotly saves charts as interactive html pages
 import h2o                  #https://www.h2o.ai
 import h2o.estimators.gbm
 import pandas
@@ -11,7 +14,6 @@ import numpy
 
 graph_out = "../charts/"
 
-#@TODO Check using numpy types
 """
 Since the data is already cleaned up and prepared for calculations
 I simply load the csv files to pandas data frames.
